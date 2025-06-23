@@ -1,4 +1,5 @@
-from abc import ABC, abstractmethod
+from abc import ABC
+from http import HTTPStatus
 
 from django.http import JsonResponse
 
@@ -12,12 +13,10 @@ class PaymentException(ABC, Exception):
         super().__init__(*args)
 
     @property
-    @abstractmethod
     def status_code(self) -> int:
         pass
 
     @property
-    @abstractmethod
     def description(self) -> str:
         pass
 
@@ -42,7 +41,7 @@ class PaymentAlreadyProcessed(PaymentException):
 
     @property
     def status_code(self) -> int:
-        return 200
+        return HTTPStatus.OK
 
 
 class OrganizationNotFound(PaymentException):
@@ -54,4 +53,4 @@ class OrganizationNotFound(PaymentException):
 
     @property
     def status_code(self) -> int:
-        return 404
+        return HTTPStatus.NOT_FOUND

@@ -1,11 +1,11 @@
-from django.http import HttpRequest, HttpResponseBadRequest, JsonResponse
+from http import HTTPStatus
+
+from django.http import HttpRequest, JsonResponse
 from django.views import View
-from pydantic import ValidationError
 from stdnum.ru import inn as inn_utils
 
-from .dto import PaymentDTO
-from .exceptions import OrganizationNotFound, PaymentAlreadyProcessed
-from .services import PaymentService
+from .dto import OrganizationBalanceDTO, PaymentDTO
+from .services import OrganizationService, PaymentService
 
 
 class ReceivePaymentView(View):
@@ -13,23 +13,24 @@ class ReceivePaymentView(View):
     dto_class = PaymentDTO
 
     def post(self, request: HttpRequest) -> JsonResponse:
-        try:
-            payment_dto = self.dto_class.model_validate_json(request.body)
-            payment_db_dto = self.service.process_payment(payment_dto)
+        payment_dto = self.dto_class.model_validate_json(request.body)
+        inn_utils.validate(payment_dto.payer_inn)
         
-        except ValidationError as e:
-            return JsonResponse({'errors': e.errors()}, status=400)
-        
-        except (PaymentAlreadyProcessed, OrganizationNotFound) as e:
-            return e.to_response()
-
-        return JsonResponse(payment_db_dto.model_dump(), status=200)
+        payment_db_dto = self.service.process_payment(payment_dto)
+        return JsonResponse(payment_db_dto.model_dump(), status=HTTPStatus.OK)
 
 
 class ReadBalanceView(View):
+    service = OrganizationService()
+    dto_class = OrganizationBalanceDTO
+
     def get(self, request: HttpRequest, inn: str) -> JsonResponse:
-        if not inn_utils.is_valid(inn):
-            return HttpResponseBadRequest("Invalid INN.")
+        inn_utils.validate(inn)
+
+        org_balance_dto = self.service.get_org_balance(inn)
+        return JsonResponse(org_balance_dto.model_dump(), status=HTTPStatus.OK)
+
+
         
         
         

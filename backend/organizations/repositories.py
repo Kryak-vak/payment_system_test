@@ -23,9 +23,13 @@ class BaseRepository(ABC, Generic[ModelType, MapperType, DTOType]):
         obj = self.model(**dto.model_dump())
         obj.save()
         return self._dto(obj)
+    
+    def get(self, *args, **kwargs) -> Optional[DTOType]:
+        obj = self.model.objects.filter(*args, **kwargs).first()
+        return self._dto(obj)
 
-    def _dto(self, obj: ModelType) -> DTOType:
-        return self.mapper.to_dto(obj)
+    def _dto(self, obj: ModelType) -> Optional[DTOType]:
+        return self.mapper.to_dto(obj) if obj else None
 
 
 class PaymentRepository(BaseRepository[Payment, PaymentMapper, PaymentDTO]):
@@ -35,7 +39,7 @@ class PaymentRepository(BaseRepository[Payment, PaymentMapper, PaymentDTO]):
     def get_payment_by_id(self, operation_id: UUID) -> Optional[PaymentDTO]:
         payment = self.model.objects.filter(pk=operation_id).first()
         
-        return self.mapper.to_dto(payment) if payment else None
+        return self._dto(payment) if payment else None
 
 
 class OrganizationRepository(

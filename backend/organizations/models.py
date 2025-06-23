@@ -28,5 +28,5 @@ class PaymentTransaction(models.Model):
     operation_id = models.UUIDField(primary_key=True)
     amount = models.DecimalField(max_digits=8, decimal_places=2)
     payer_inn = models.TextField(max_length=12)
-    payment_date = models.DateTimeField()
+    create_date = models.DateTimeField()
     status = models.TextField(max_length=30)
